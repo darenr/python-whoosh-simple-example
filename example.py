@@ -45,7 +45,6 @@ class SearchEngine:
         with self.ix.searcher() as searcher:
             results = searcher.search(MultifieldParser(fields, schema=schema).parse(q))
             for r in results:
-                d = {k:v for k, v in r.items()}
                 d = json.loads(r['raw'])
                 if highlight:
                     for f in fields:
