@@ -6,21 +6,35 @@ from whoosh.qparser import MultifieldParser
 from whoosh.filedb.filestore import RamStorage
 from whoosh.analysis import StemmingAnalyzer
 
+import json
+
 #
 # Simple example indexing to an in-memory index and performing a search
-# across multiple fields and returning an array of highlighted results
+# across multiple fields and returning an array of highlighted results.
+#
+# One lacking feature of Whoosh is the no-analyze option. In this example
+# the SearchEngine modifies the given schema and adds a RAW field. When doc
+# are added to the index only stored fields in the schema are passed to Whoosh
+# along with json encoded version of the whole doc stashed in the RAW field.
+#
+# On query the <Hit> in the result is ignored and instead the RAW field is
+# decoded containing any extra fields present in the original document. 
 #
 
 
 class SearchEngine:
 
     def __init__(self, schema):
+        self.schema = schema
+        schema.add('raw', TEXT(stored=True))
         self.ix = RamStorage().create_index(schema)
 
     def index_documents(self, docs: Sequence):
         writer = self.ix.writer()
         for doc in docs:
-            writer.add_document(**doc)
+            d = {k: v for k,v in doc.items() if k in self.schema.stored_names()}
+            d['raw'] = json.dumps(doc) # raw version of all of doc
+            writer.add_document(**d)
         writer.commit(optimize=True)
 
     def get_index_size(self) -> int:
@@ -32,6 +46,7 @@ class SearchEngine:
             results = searcher.search(MultifieldParser(fields, schema=schema).parse(q))
             for r in results:
                 d = {k:v for k, v in r.items()}
+                d = json.loads(r['raw'])
                 if highlight:
                     for f in fields:
                         if r[f] and isinstance(r[f], str):
@@ -47,20 +62,23 @@ if __name__ == '__main__':
         {
             "id": "1",
             "title": "First document banana",
-            "description": "This is the first document we've added!",
-            "tags": ['foo', 'bar']
+            "description": "This is the first document we've added in San Francisco!",
+            "tags": ['foo', 'bar'],
+            "extra": "kittens and cats"
         },
         {
             "id": "2",
             "title": "Second document hatstand",
             "description": "The second one is even more interesting!",
-            "tags": ['alice']
+            "tags": ['alice'],
+            "extra": "foals and horses"
         },
         {
             "id": "3",
             "title": "Third document slug",
             "description": "The third one is less interesting!",
-            "tags": ['bob']
+            "tags": ['bob'],
+            "extra": "bunny and rabbit"
         },
     ]
 
@@ -78,7 +96,7 @@ if __name__ == '__main__':
 
     fields_to_search = ["title", "description", "tags"]
 
-    for q in ["hatstand", "banana", "first", "second", "alice", "bob"]:
+    for q in ["hatstand", "banana", "first", "second", "alice", "bob", "san francisco"]:
         print(f"Query:: {q}")
         print("\t", engine.query(q, fields_to_search, highlight=True))
         print("-"*70)
