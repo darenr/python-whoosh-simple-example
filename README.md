@@ -48,20 +48,20 @@ produces the following output:
 ```
 indexed 3 documents
 Query:: hatstand
-	 [{'description': 'The second one is even more interesting!', 'id': '2', 'tags': ['alice'], 'title': 'Second document <b class="match term0">hatstand</b>'}]
+    [{'description': 'The second one is even more interesting!', 'id': '2', 'tags': ['alice'], 'title': 'Second document <b class="match term0">hatstand</b>'}]
 ----------------------------------------------------------------------
 Query:: banana
-	 [{'description': "This is the first document we've added!", 'id': '1', 'tags': ['foo', 'bar'], 'title': 'First document <b class="match term0">banana</b>'}]
+    [{'description': "This is the first document we've added!", 'id': '1', 'tags': ['foo', 'bar'], 'title': 'First document <b class="match term0">banana</b>'}]
 ----------------------------------------------------------------------
 Query:: first
-	 [{'description': 'This is the <b class="match term1">first</b> document we\'ve added', 'id': '1', 'tags': ['foo', 'bar'], 'title': '<b class="match term0">First</b> document banana'}]
+    [{'description': 'This is the <b class="match term1">first</b> document we\'ve added', 'id': '1', 'tags': ['foo', 'bar'], 'title': '<b class="match term0">First</b> document banana'}]
 ----------------------------------------------------------------------
 Query:: second
-	 [{'description': 'The <b class="match term1">second</b> one is even more interesting', 'id': '2', 'tags': ['alice'], 'title': '<b class="match term0">Second</b> document hatstand'}]
+    [{'description': 'The <b class="match term1">second</b> one is even more interesting', 'id': '2', 'tags': ['alice'], 'title': '<b class="match term0">Second</b> document hatstand'}]
 ----------------------------------------------------------------------
 Query:: alice
-	 [{'description': 'The second one is even more interesting!', 'id': '2', 'tags': ['alice'], 'title': 'Second document hatstand'}]
+    [{'description': 'The second one is even more interesting!', 'id': '2', 'tags': ['alice'], 'title': 'Second document hatstand'}]
 ----------------------------------------------------------------------
 Query:: bob
-	 [{'description': 'The third one is less interesting!', 'id': '3', 'tags': ['bob'], 'title': 'Third document slug'}]
+    [{'description': 'The third one is less interesting!', 'id': '3', 'tags': ['bob'], 'title': 'Third document slug'}]
 ```
