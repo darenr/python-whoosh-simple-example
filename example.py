@@ -43,7 +43,7 @@ class SearchEngine:
     def query(self, q: str, fields: Sequence, highlight: bool=True) -> List[Dict]:
         search_results = []
         with self.ix.searcher() as searcher:
-            results = searcher.search(MultifieldParser(fields, schema=schema).parse(q))
+            results = searcher.search(MultifieldParser(fields, schema=self.schema).parse(q))
             for r in results:
                 d = json.loads(r['raw'])
                 if highlight:
