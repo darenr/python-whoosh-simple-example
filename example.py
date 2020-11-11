@@ -27,7 +27,7 @@ class SearchEngine:
     def __init__(self, schema):
         self.schema = schema
         schema.add('raw', TEXT(stored=True))
-        self.ix = RamStorage().create_index(schema)
+        self.ix = RamStorage().create_index(self.schema)
 
     def index_documents(self, docs: Sequence):
         writer = self.ix.writer()
