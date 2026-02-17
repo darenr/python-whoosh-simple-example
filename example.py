@@ -7,6 +7,9 @@ from datetime import datetime, timedelta, timezone
 from search_engine import SearchEngine
 
 if __name__ == "__main__":
+    # Define some sample documents.
+    # Notice we include 'extra' fields that aren't specifically in the search schema.
+    # These will still be preserved because SearchEngine pickles the entire input dict.
     docs = [
         {
             "id": "1",
@@ -34,41 +37,69 @@ if __name__ == "__main__":
         },
     ]
 
+    # Define the search schema.
+    # - ID: Unindexed value that can be retrieved quickly.
+    # - TEXT: Indexed (searchable) text.
+    # - StemmingAnalyzer: Normalizes words (e.g., 'running' becomes 'run').
+    # - KEYWORD: Space-separated keywords, indexed as a single unit or individually.
+    # - DATETIME: Indexed as a date for range queries.
     schema = Schema(
         id=ID(stored=True),
         title=TEXT(stored=True),
         description=TEXT(stored=True, analyzer=StemmingAnalyzer()),
-        tags=KEYWORD(stored=True),
+        tags=KEYWORD(stored=True, lowercase=True, commas=True),
         date=DATETIME(stored=True),
     )
 
+    print("--- Schema Configuration ---")
     for k, v in schema.items():
-        print(f"{k}: {v.__class__.__name__}")
+        print(f"Field '{k}': {v.__class__.__name__}")
+    print(f"Total searchable fields: {schema.names()}")
+    print("-" * 28 + "\n")
 
-    print("field names:", schema.names())
-
+    # Initialize and index
     engine = SearchEngine(schema)
     engine.index_documents(docs)
 
-    print(f"indexed {engine.get_index_size()} documents")
+    print(f"Successfully indexed {engine.get_index_size()} documents.\n")
 
-    print("\nPerforming some simple keyword queries...")
-    for q in ["first", "second", "THIRD", "kittens", "bob", "alice", "san francisco"]:
+    # demonstrate simple keyword queries
+    print("--- Keyword Searching ---")
+    # Whoosh is case-insensitive by default with most analyzers.
+    for q in ["first", "second", "THIRD", "bob", "alice"]:
+        print(f"\nQuery: '{q}'")
         engine.search(q, limit=10, print_only=True)
 
-    # now an example of a query that matches on the description field but not the title field
-    print("\nPerforming a query that matches on description field but not title field...")
-    q = "san francisco"
-    engine.search(q, limit=10, print_only=True)
+    # demonstrate phrase search and multifield search
+    print("\n--- Phrase and Multi-field Searching ---")
+    # 'san francisco' will match because it's in the description.
+    # 'kittens' will match because SearchEngine searches all fields (except 'raw').
+    # Note: 'kittens' is in the 'extra' field of doc 1.
+    # BUT WAIT: 'extra' isn't in the schema, so it won't be indexed for search!
+    # The 'pickle' trick allows us to SEE 'extra' in the results,
+    # but it doesn't make 'extra' searchable unless we add it to the schema.
+    for q in ["san francisco", "kittens"]:
+        print(f"\nQuery: '{q}'")
+        engine.search(q, limit=10, print_only=True)
 
-    # now a complex query that matches on multiple fields
+    # demonstrate complex boolean logic
+    print("\n--- Boolean Logic Searching ---")
     q = "San Francisco OR (tags:alice AND description:interesting)"
+    print(f"Query: '{q}'")
     engine.search(q, limit=10, print_only=True)
 
-    # now a query showing date ranges, any document from today or yesterday
-    print("\nPerforming a query that matches on date range...")
+    # demonstrate date range queries
+    print("\n--- Date Range Searching ---")
+    # Syntax: [YYYYMMDD TO YYYYMMDD]
     today = datetime.now(timezone.utc).date()
     yesterday = today - timedelta(days=1)
     q = f"date:[{yesterday.strftime('%Y%m%d')} TO {today.strftime('%Y%m%d')}]"
-
+    print(f"Searching for documents from {yesterday} to {today}...")
+    print(f"Query: '{q}'")
     engine.search(q, limit=10, print_only=True)
+
+    # demonstrate spelling suggestions
+    print("\n--- Spelling Suggestions ---")
+    q = "fransisco"  # misspelled
+    print(f"Query: '{q}'")
+    engine.search(q, limit=5, print_only=True)
