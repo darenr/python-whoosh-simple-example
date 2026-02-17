@@ -1,18 +1,18 @@
 from typing import Dict, List, Sequence
 
-from whoosh.fields import STORED
+from whoosh.fields import COLUMN, TEXT
 from whoosh.qparser import MultifieldParser
 
 from whoosh.filedb.filestore import RamStorage
 
 import pickle
-from datetime import datetime
+import pprint
 
 
 class SearchEngine:
     def __init__(self, schema):
         self.schema = schema
-        schema.add("raw", STORED())
+        schema.add("raw", COLUMN())
         self.ix = RamStorage().create_index(self.schema)
 
     def index_documents(self, docs: Sequence):
@@ -26,12 +26,14 @@ class SearchEngine:
     def get_index_size(self) -> int:
         return self.ix.doc_count_all()
 
-    def _query(self, q: str, fields: Sequence) -> List[Dict]:
+    def _query(self, q: str, limit: int) -> List[Dict]:
         search_results = []
         with self.ix.searcher() as searcher:
             corrector = searcher.corrector("description")
-
-            results = searcher.search(MultifieldParser(fields, schema=self.schema).parse(q))
+            fields_to_search = [x for x in self.schema.names() if x != "raw"]
+            results = searcher.search(
+                MultifieldParser(fields_to_search, schema=self.schema).parse(q), limit=limit
+            )
             if results.is_empty():
                 print(f"No results found for query: {q}")
                 suggestions = corrector.suggest(q, limit=3)
@@ -41,20 +43,16 @@ class SearchEngine:
                     print("No suggestions available.")
             else:
                 for r in results:
+                    # restore the whole object not just the stored fields, using pickle to preserve datatypes
                     d = pickle.loads(r["raw"])
                     search_results.append(d)
 
         return search_results
 
-    def search(self, q: str, fields: Sequence) -> str:
-        return self._query(q, fields)
-
-    def show_results(self, q: str, fields: Sequence) -> str:
-        results = self._query(q, fields)
-        for r in results:
-            row = {
-                k: v
-                for k, v in r.items()
-                if k != "raw" and isinstance(v, (str, list, datetime))
-            }
-            print(f"query: {q}\n\t{row}")
+    def search(self, q: str, limit: int, print_only=False) -> str:
+        results = self._query(q, limit=limit)
+        if print_only:
+            for row in results:
+                pprint.pp(row)
+        else:
+            return results

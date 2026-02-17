@@ -37,7 +37,7 @@ if __name__ == "__main__":
     schema = Schema(
         id=ID(stored=True),
         title=TEXT(stored=True),
-        description=TEXT(stored=True, analyzer=StemmingAnalyzer(), spelling=True),
+        description=TEXT(stored=True, analyzer=StemmingAnalyzer()),
         tags=KEYWORD(stored=True),
         date=DATETIME(stored=True),
     )
@@ -45,25 +45,25 @@ if __name__ == "__main__":
     for k, v in schema.items():
         print(f"{k}: {v.__class__.__name__}")
 
+    print("field names:", schema.names())
+
     engine = SearchEngine(schema)
     engine.index_documents(docs)
 
     print(f"indexed {engine.get_index_size()} documents")
 
-    fields_to_search = ["title", "description", "tags"]
-
     print("\nPerforming some simple keyword queries...")
     for q in ["first", "second", "THIRD", "kittens", "bob", "alice", "san francisco"]:
-        engine.show_results(q, fields_to_search)
+        engine.search(q, limit=10, print_only=True)
 
     # now an example of a query that matches on the description field but not the title field
-    print("\nPerforming a query that matches on description but not title...")
+    print("\nPerforming a query that matches on description field but not title field...")
     q = "san francisco"
-    engine.show_results(q, fields_to_search)
+    engine.search(q, limit=10, print_only=True)
 
     # now a complex query that matches on multiple fields
     q = "San Francisco OR (tags:alice AND description:interesting)"
-    engine.show_results(q, fields_to_search)
+    engine.search(q, limit=10, print_only=True)
 
     # now a query showing date ranges, any document from today or yesterday
     print("\nPerforming a query that matches on date range...")
@@ -71,4 +71,4 @@ if __name__ == "__main__":
     yesterday = today - timedelta(days=1)
     q = f"date:[{yesterday.strftime('%Y%m%d')} TO {today.strftime('%Y%m%d')}]"
 
-    engine.show_results(q, fields_to_search)
+    engine.search(q, limit=10, print_only=True)
