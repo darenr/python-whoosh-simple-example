@@ -6,7 +6,8 @@ from whoosh.qparser import MultifieldParser
 from whoosh.filedb.filestore import RamStorage
 
 import pickle
-import pprint
+
+from rich.pretty import pprint
 
 
 class SearchEngine:
@@ -53,6 +54,6 @@ class SearchEngine:
         results = self._query(q, limit=limit)
         if print_only:
             for row in results:
-                pprint.pp(row)
+                pprint(row)
         else:
             return results
