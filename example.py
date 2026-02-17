@@ -1,6 +1,6 @@
 from whoosh.fields import Schema, TEXT, ID, KEYWORD, DATETIME
 
-from whoosh.analysis import StemmingAnalyzer
+from whoosh.analysis import StemmingAnalyzer, StandardAnalyzer
 
 from datetime import datetime, timedelta, timezone
 
@@ -40,13 +40,13 @@ if __name__ == "__main__":
     # Define the search schema.
     # - ID: Unindexed value that can be retrieved quickly.
     # - TEXT: Indexed (searchable) text.
-    # - StemmingAnalyzer: Normalizes words (e.g., 'running' becomes 'run').
+    # - StandardAnalyzer: Tokenizes text using standard rules (e.g., splits on whitespace and punctuation).
     # - KEYWORD: Space-separated keywords, indexed as a single unit or individually.
     # - DATETIME: Indexed as a date for range queries.
     schema = Schema(
         id=ID(stored=True),
         title=TEXT(stored=True),
-        description=TEXT(stored=True, analyzer=StemmingAnalyzer()),
+        description=TEXT(stored=True, analyzer=StandardAnalyzer(), spelling=True),
         tags=KEYWORD(stored=True, lowercase=True, commas=True),
         date=DATETIME(stored=True),
     )
