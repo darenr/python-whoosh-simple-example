@@ -1,6 +1,6 @@
 from whoosh.fields import Schema, TEXT, ID, KEYWORD, DATETIME
 
-from whoosh.analysis import StemmingAnalyzer, StandardAnalyzer
+from whoosh.analysis import StandardAnalyzer
 
 from datetime import datetime, timedelta, timezone
 
